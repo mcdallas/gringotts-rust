@@ -1,0 +1,10 @@
+[package]
+name = "gringotts"
+version = "0.1.0"
+authors = ["Mike Dallas <mcdallas@protonmail.com>"]
+
+[dependencies]
+reqwest = "*"
+serde_json = "*"
+serde = "*"
+serde_derive = "*"
