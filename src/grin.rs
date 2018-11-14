@@ -88,6 +88,7 @@ impl OwnerApi{
             "selection_strategy_is_use_all": true,
             "fluff": fluff
         });
+        println!("Creating new transaction");
         self.request("issue_send_tx", &payload)
     }
 
@@ -98,6 +99,7 @@ impl OwnerApi{
     }
 
     pub fn finalize(self, slate: Value) -> Result<Value, Error> {
+        println!("Finalizing transaction");
         self.request("finalize_tx", slate)
     }
 }

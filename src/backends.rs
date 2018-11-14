@@ -80,17 +80,21 @@ impl MessageBroker for Keybase {
 
     fn listen(nseconds: u64, sender: &str) -> Option<Value> {
         let start = Instant::now();
-
+        println!("Waiting for message from {}", sender);
         while start.elapsed().as_secs() < nseconds {
             let unread = Keybase::get_unread(sender);
             for msg in unread.iter() {
                 match from_str(msg) {
-                    Ok(slate) => if is_slate(&slate) { return Some(slate) },
+                    Ok(slate) => if is_slate(&slate) {
+                        println!("Received message from {}", sender);
+                        return Some(slate)
+                    },
                     Err(_) => ()
                 }
             }
             sleep(Duration::from_millis(1000));
         }
+        println!("Did not receive reply from {} in {} seconds", sender, nseconds);
         None
     }
 }

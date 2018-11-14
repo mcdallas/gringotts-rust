@@ -63,7 +63,7 @@ fn receive(host: &str, sender: &str) {
             backends::Keybase::send(signed, sender, 60);
             println!("Done");
         },
-        None => { println!("Did not receive msg from {}", sender) }
+        None => ()
     };
 }
 
@@ -75,7 +75,6 @@ fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secre
     backends::Keybase::send(slate, recipient, ttl);
     match backends::Keybase::listen(ttl as u64, recipient) {
         Some(tx) => {
-            println!("Received reply from {}", recipient);
             match api.clone().finalize(tx) {
                 Ok(_) => { println!("Transaction {} broadcasted", slate_id.unwrap()) },
                 Err(e) => {
@@ -84,9 +83,6 @@ fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secre
                 }
             }
         },
-        None => {
-            println!("Did not receive reply from {}", recipient) ;
-            api.rollback(slate_id.unwrap());
-        }
+        None => { api.rollback(slate_id.unwrap()); }
     }
 }
