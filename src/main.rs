@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate serde_json;
-mod grin;
 mod backends;
+mod grin;
 use backends::MessageBroker;
 use std::env::home_dir;
 
@@ -23,7 +23,9 @@ fn read_secret() -> String {
 }
 
 fn main() {
-    if !backends::Keybase::exists() { panic!("Keybase not found in PATH"); }
+    if !backends::Keybase::exists() {
+        panic!("Keybase not found in PATH");
+    }
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
@@ -35,9 +37,9 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("send") {
         let host = matches.value_of("host").unwrap();
         let recipient = matches.value_of("recipient").unwrap();
-        let grins :f64 = matches.value_of("amount").unwrap().parse().unwrap() ;
-        let amount = (grins * 100000000.0) as u64 ;
-        let ttl :u16 = matches.value_of("ttl").unwrap().parse().unwrap();
+        let grins: f64 = matches.value_of("amount").unwrap().parse().unwrap();
+        let amount = (grins * 100000000.0) as u64;
+        let ttl: u16 = matches.value_of("ttl").unwrap().parse().unwrap();
         let fluff = matches.is_present("fluff");
         let username = matches.value_of("username").unwrap();
         let secret = if matches.is_present("secret") {
@@ -48,13 +50,12 @@ fn main() {
 
         send(amount, recipient, ttl, host, username, secret, fluff);
     }
-
-
 }
 
 fn receive(host: &str, sender: &str) {
-
-    let api = grin::ForeignApi{host: host.to_owned()};
+    let api = grin::ForeignApi {
+        host: host.to_owned(),
+    };
     let reply = backends::Keybase::listen(180, sender);
     match reply {
         Some(msg) => {
@@ -62,18 +63,30 @@ fn receive(host: &str, sender: &str) {
             println!("Returning slate");
             backends::Keybase::send(signed, sender, 60);
             println!("Done");
-        },
-        None => ()
+        }
+        None => (),
     };
 }
 
-fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secret: String, fluff: bool) {
-    let api = grin::OwnerApi{host: host.to_owned(), username: username.to_owned(), secret: secret.to_owned()};
+fn send(
+    amount: u64,
+    recipient: &str,
+    ttl: u16,
+    host: &str,
+    username: &str,
+    secret: String,
+    fluff: bool,
+) {
+    let api = grin::OwnerApi {
+        host: host.to_owned(),
+        username: username.to_owned(),
+        secret: secret.to_owned(),
+    };
     let slate = match api.clone().create_tx(amount, fluff) {
         Ok(val) => val,
         Err(e) => {
             println!("{}", e);
-            return
+            return;
         }
     };
     let cloned = slate.clone();
@@ -81,15 +94,15 @@ fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secre
     println!("Sending slate to {}", recipient);
     backends::Keybase::send(slate, recipient, ttl);
     match backends::Keybase::listen(ttl as u64, recipient) {
-        Some(tx) => {
-            match api.clone().finalize(tx) {
-                Ok(_) => { println!("Transaction {} broadcasted", slate_id.unwrap()) },
-                Err(e) => {
-                     println!("{}", e);
-                     api.rollback(slate_id.unwrap());
-                }
+        Some(tx) => match api.clone().finalize(tx) {
+            Ok(_) => println!("Transaction {} broadcasted", slate_id.unwrap()),
+            Err(e) => {
+                println!("{}", e);
+                api.rollback(slate_id.unwrap());
             }
         },
-        None => { api.rollback(slate_id.unwrap()); }
+        None => {
+            api.rollback(slate_id.unwrap());
+        }
     }
 }
