@@ -65,7 +65,7 @@ impl MessageBroker for Keybase {
         else {
             Command::new("which")
         };
-        proc.arg("keybase").status().is_ok()
+        proc.arg("keybase").stdout(Stdio::null()).status().is_ok()
     }
 
     fn send<T: Serialize>(message: T, recipient: &str, ttl: u16) -> bool {
