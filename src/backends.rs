@@ -1,46 +1,32 @@
 extern crate serde;
-use self::serde::{Serialize, Deserialize, Serializer};
+use self::serde::Serialize;
 use serde_json::{Value, to_string, from_str};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::str::from_utf8;
 use std::time::Instant;
 use std::time::Duration;
 use std::thread::sleep;
 
+fn is_slate(blob: &Value) -> bool {
+    if !blob.is_object() { return false }
+
+    blob.get("num_participants").is_some() && blob.get("id").is_some() && blob.get("tx").is_some()
+}
+
 pub trait MessageBroker {
     fn exists() -> bool;
 
-    fn send<T: Serialize>(message: T, recipient: &str) -> bool;
+    fn send<T: Serialize>(message: T, recipient: &str, ttl: u16) -> bool;
 
-    fn receive(sender: &str) -> Vec<String>;
+    fn listen(nseconds: u64, sender: &str) -> Option<Value>;
 
-    fn poll(nseconds: u64, sender: &str) ->  Option<Value>;
 
 }
 
 pub struct Keybase;
 
-impl MessageBroker for Keybase {
-
-    fn exists() -> bool {
-        let mut proc = if cfg!(target_os = "windows") {
-            Command::new("where")
-        }
-        else {
-            Command::new("which")
-        };
-        proc.arg("keybase").status().is_ok()
-    }
-
-    fn send<T: Serialize>(message: T, recipient: &str) -> bool {
-        let mut proc = Command::new("keybase");
-        let msg = to_string(&message).expect("Serialization error");
-        proc.args(&["chat", "send", "--exploding-lifetime", "60s", "--topic-type", "dev", recipient, &msg ]);
-        let _ = proc.output().unwrap().stdout;
-        proc.status().is_ok()
-    }
-
-    fn receive(sender: &str) -> Vec<String> {
+impl Keybase {
+        fn get_unread(sender: &str) -> Vec<String> {
         let payload = to_string(&json!({
             "method": "read",
             "params": {
@@ -68,15 +54,38 @@ impl MessageBroker for Keybase {
         }
         unread
     }
+}
 
-    fn poll(nseconds: u64, sender: &str) -> Option<Value> {
+impl MessageBroker for Keybase {
+
+    fn exists() -> bool {
+        let mut proc = if cfg!(target_os = "windows") {
+            Command::new("where")
+        }
+        else {
+            Command::new("which")
+        };
+        proc.arg("keybase").status().is_ok()
+    }
+
+    fn send<T: Serialize>(message: T, recipient: &str, ttl: u16) -> bool {
+        let seconds = format!("{}s", ttl);
+        let mut proc = Command::new("keybase");
+        let msg = to_string(&message).expect("Serialization error");
+        let args = ["chat", "send", "--exploding-lifetime", &seconds, "--topic-type", "dev", recipient, &msg ];
+        proc.args(&args).stdout(Stdio::null());
+        proc.status().is_ok()
+    }
+
+
+    fn listen(nseconds: u64, sender: &str) -> Option<Value> {
         let start = Instant::now();
 
         while start.elapsed().as_secs() < nseconds {
-            let unread = Keybase::receive(sender);
+            let unread = Keybase::get_unread(sender);
             for msg in unread.iter() {
                 match from_str(msg) {
-                    Ok(slate) => return Some(slate),
+                    Ok(slate) => if is_slate(&slate) { return Some(slate) },
                     Err(_) => ()
                 }
             }

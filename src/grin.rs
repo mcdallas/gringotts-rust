@@ -5,8 +5,7 @@ extern crate serde_json;
 
 extern crate serde;
 
-use self::serde::{Serialize, Deserialize};
-use std::io::Read;
+use self::serde::Serialize;
 use serde_json::Value;
 
 pub struct ForeignApi{
@@ -39,33 +38,33 @@ pub struct ForeignApi{
 
 //}
 impl ForeignApi{
-    pub fn receive_tx<T: Serialize>(self, slate: T) {
+//    pub fn receive_tx<T: Serialize>(self, slate: T) {
+//
+//        let payload = json!({
+//      "name": "John Doe",
+//      "age": 43,
+//      "phones": [
+//        "+44 1234567",
+//        "+44 2345678"
+//      ]
+//    });
+//        let client: reqwest::Client = reqwest::Client::new();
+//        let mut res = client.post(&self.host)
+//        .json(&payload)
+//        .send().unwrap();
+////        let json = res.json();
+////        let json: Ip = reqwest::get("http://httpbin.org/ip").unwrap().json().unwrap();
+//
+////        let mut buf = String::new();
+////        res.read_to_string(&mut buf)
+////        .expect("Failed to read response");
+//        let v: Value = serde_json::from_str(&res.text().unwrap()).unwrap();
+//        println!("{:?}", v["data"]);
+//    }
 
-        let payload = json!({
-      "name": "John Doe",
-      "age": 43,
-      "phones": [
-        "+44 1234567",
-        "+44 2345678"
-      ]
-    });
-        let client: reqwest::Client = reqwest::Client::new();
-        let mut res = client.post(&self.host)
-        .json(&payload)
-        .send().unwrap();
-//        let json = res.json();
-//        let json: Ip = reqwest::get("http://httpbin.org/ip").unwrap().json().unwrap();
-
-//        let mut buf = String::new();
-//        res.read_to_string(&mut buf)
-//        .expect("Failed to read response");
-        let v: Value = serde_json::from_str(&res.text().unwrap()).unwrap();
-        println!("{:?}", v["data"]);
-    }
-
-    pub fn receive<T: Serialize>(self, slate: T) -> Value {
-        let url = format!("http://{}/v1/wallet/owner/receive_tx", &self.host);
-        println!("{}", url);
+    pub fn receive_tx<T: Serialize>(self, slate: T) -> Value {
+        let url = format!("http://{}/v1/wallet/foreign/receive_tx", &self.host);
+        println!{"Signing slate"};
         let client: reqwest::Client = reqwest::Client::new();
         let mut res = client.post(&url).json(&slate).send().expect("Bad url!");
         let v: Value = serde_json::from_str(&res.text().expect("Bad response")).expect("Invalid json");
@@ -73,11 +72,13 @@ impl ForeignApi{
     }
 }
 
+
 pub struct OwnerApi{
     pub host: String,
     pub username: String,
     pub secret: String
 }
+
 
 impl OwnerApi{
     fn request<T: Serialize>(self, endpoint: &str, payload: T) -> Value {
@@ -100,5 +101,15 @@ impl OwnerApi{
             "fluff": false
         });
         self.request("create_tx", &payload)
+    }
+
+    pub fn rollback(self, slate_id: &str) {
+        println!("Rolling back transaction");
+        let endpoint = format!("cancel_tx?tx_id={}", slate_id);
+        self.request(&endpoint, "");
+    }
+
+    pub fn finalize(self, slate: Value) {
+        self.request("finalize_tx", slate);
     }
 }
