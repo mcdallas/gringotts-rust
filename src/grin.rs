@@ -11,6 +11,7 @@ pub enum Error {
     BadUrl(String),
     BadResponse(String),
     DeserializationError(String),
+    BadStatus(u16, String)
 }
 
 impl fmt::Display for Error {
@@ -19,6 +20,7 @@ impl fmt::Display for Error {
             Error::BadUrl(ref b) => write!(f, "Bad URL: {}", b),
             Error::BadResponse(ref url) => write!(f, "Bad Response from {}", url),
             Error::DeserializationError(ref url) => write!(f, "Deserialization error : {}", url),
+            Error::BadStatus(ref code, ref reason) => write!(f, "Status {} with reason {}", code, reason),
         }
     }
 }
@@ -40,6 +42,10 @@ impl ForeignApi {
             Ok(text) => text,
             Err(_) => return Err(Error::BadResponse(url)),
         };
+
+        if !res.status().is_success() {
+            return Err(Error::BadStatus(res.status().as_u16(), txt));
+        }
         let v = match serde_json::from_str(&txt) {
             Ok(json) => json,
             Err(_) => return Err(Error::DeserializationError(txt)),
@@ -73,6 +79,10 @@ impl OwnerApi {
             Ok(text) => text,
             Err(_) => return Err(Error::BadResponse(url)),
         };
+
+        if !resp.status().is_success() {
+            return Err(Error::BadStatus(resp.status().as_u16(), txt));
+        }
         let v = match serde_json::from_str(&txt) {
             Ok(json) => json,
             Err(_) => return Err(Error::DeserializationError(txt)),
@@ -86,7 +96,7 @@ impl OwnerApi {
             "minimum_confirmations": 5,
             "method": "file",
             "dest": "",
-            "max_outputs": 2,
+            "max_outputs": 5,
             "num_change_outputs": 1,
             "selection_strategy_is_use_all": true,
             "fluff": fluff
@@ -96,13 +106,24 @@ impl OwnerApi {
     }
 
     pub fn rollback(self, slate_id: &str) -> Result<Value, Error> {
-        println!("Rolling back transaction");
+        println!("Rolling back transaction..");
         let endpoint = format!("cancel_tx?tx_id={}", slate_id);
         self.request(&endpoint, "")
     }
 
     pub fn finalize(self, slate: Value) -> Result<Value, Error> {
-        println!("Finalizing transaction");
+        println!("Finalizing transaction..");
         self.request("finalize_tx", slate)
+    }
+
+    pub fn broadcast(self, tx: Value, fluff: bool)  {
+        println!("Broadcasting transaction..");
+        let endpoint = if fluff {
+            "post_tx?fluff"
+        } else {
+            "post_tx"
+        };
+        self.request(endpoint, tx);
+
     }
 }

@@ -38,7 +38,7 @@ fn main() {
         let host = matches.value_of("host").unwrap();
         let recipient = matches.value_of("recipient").unwrap();
         let grins: f64 = matches.value_of("amount").unwrap().parse().unwrap();
-        let amount = (grins * 100000000.0) as u64;
+        let amount = (grins * 1000000000.0) as u64;
         let ttl: u16 = matches.value_of("ttl").unwrap().parse().unwrap();
         let fluff = matches.is_present("fluff");
         let username = matches.value_of("username").unwrap();
@@ -95,7 +95,10 @@ fn send(
     backends::Keybase::send(slate, recipient, ttl);
     match backends::Keybase::listen(ttl as u64, recipient) {
         Some(tx) => match api.clone().finalize(tx) {
-            Ok(_) => println!("Transaction {} broadcasted", slate_id.unwrap()),
+            Ok(finalized) => {
+                api.broadcast(finalized, fluff);
+                println!("Transaction {} broadcasted", slate_id.unwrap());
+            },
             Err(e) => {
                 println!("{}", e);
                 api.rollback(slate_id.unwrap());
