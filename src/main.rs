@@ -7,10 +7,55 @@ use std::env::home_dir;
 
 use std::fs;
 
+#[macro_use]
+extern crate clap;
+use clap::App;
+
+fn read_secret() -> String {
+    let mut path = home_dir().unwrap();
+//    path.push(".grin");
+    path.push(".api_secret");
+    println!("{:?}", path);
+    let data = fs::read_to_string(path).expect("Unable to read file");
+    data
+}
+
 fn main() {
     if !backends::Keybase::exists() { panic!("Keybase not found in PATH"); }
-    receive("192.168.0.5:13415", "mcdallas");
-    let data = fs::read_to_string(home_dir().unwrap()).expect("Unable to read file");
+    let yaml = load_yaml!("cli.yml");
+    let matches = App::from_yaml(yaml).get_matches();
+//    let config = matches.value_of("config").unwrap_or("default.conf");
+
+    if let Some(matches) = matches.subcommand_matches("receive") {
+        let host = matches.value_of("host").unwrap();
+        let sender = matches.value_of("sender").unwrap();
+        receive(host, sender);
+    }
+    if let Some(matches) = matches.subcommand_matches("send") {
+        let host = matches.value_of("host").unwrap();
+        let recipient = matches.value_of("recipient").unwrap();
+        let grins :f64 = matches.value_of("amount").unwrap().parse().unwrap() ;
+        let amount = (grins * 100000000.0) as u64 ;
+        let ttl :u16 = matches.value_of("ttl").unwrap().parse().unwrap();
+        let fluff = matches.is_present("fluff");
+        let username = matches.value_of("username").unwrap();
+        let secret = if matches.is_present("secret") {
+            matches.value_of("secret").unwrap().to_owned()
+        } else {
+            read_secret()
+        };
+        println!("GOT amount : {}", amount);
+        println!("GOT ttl : {}", ttl);
+        println!("GOT recipient : {}", recipient);
+        println!("GOT host : {}", host);
+        println!("GOT fluff : {}", fluff);
+        println!("GOT secret : {}", secret);
+
+        send(amount, recipient, ttl, host, username, secret, fluff);
+    }
+
+//    receive("192.168.0.5:13415", "mcdallas");
+//    let data = fs::read_to_string(home_dir().unwrap()).expect("Unable to read file");
 
 }
 
@@ -29,9 +74,9 @@ fn receive(host: &str, sender: &str) {
     };
 }
 
-fn send(amount:u32, recipient: &str, ttl: u16, host: &str, username: &str, secret: &str, fluff: bool) {
+fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secret: String, fluff: bool) {
     let api = grin::OwnerApi{host: host.to_owned(), username: username.to_owned(), secret: secret.to_owned()};
-    let slate = api.clone().create_tx(amount);
+    let slate = api.clone().create_tx(amount, fluff);
     let cloned = slate.clone();
     let slate_id = cloned["id"].as_str();
     backends::Keybase::send(slate, recipient, ttl);

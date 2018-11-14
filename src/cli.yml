@@ -1,0 +1,58 @@
+name: gringotts
+version: "0.1.0"
+author: Mike Dallas <mcdallas@protonmail.com>
+about: Does awesome things
+#args:
+#    - config:
+#        short: c
+#        long: config
+#        value_name: FILE
+#        help: Sets a custom config file
+#        takes_value: true
+#    - INPUT:
+#        help: Sets the input file to use
+#        required: true
+#        index: 1
+#    - verbose:
+#        short: v
+#        multiple: true
+#        help: Sets the level of verbosity
+subcommands:
+    - receive:
+        about: Recieves a transaction from sender
+        args:
+            - sender:
+                index: 1
+                required: true
+            - host:
+                short: h
+                long: host
+                default_value: 127.0.0.1:13415
+    - send:
+        args:
+            - amount:
+                index: 1
+                required: true
+            - recipient:
+                index: 2
+                required: true
+            - ttl:
+                short: t
+                long: ttl
+                default_value: "60"
+            - host:
+                short: h
+                long: host
+                default_value: 127.0.0.1:13420
+            - username:
+                short: u
+                long: username
+                default_value: grin
+            - secret:
+                short: s
+                long: secret
+                takes_value: true
+            - fluff:
+                short: f
+                takes_value: false
+

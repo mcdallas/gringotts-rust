@@ -86,7 +86,7 @@ impl OwnerApi{
         v
     }
 
-    pub fn create_tx(self, amount: u32) -> Value {
+    pub fn create_tx(self, amount: u64, fluff: bool) -> Value {
         let payload = json!({
             "amount": amount,
             "minimum_confirmations": 5,
@@ -95,7 +95,7 @@ impl OwnerApi{
             "max_outputs": 2,
             "num_change_outputs": 1,
             "selection_strategy_is_use_all": true,
-            "fluff": false
+            "fluff": fluff
         });
         self.request("create_tx", &payload)
     }
