@@ -31,19 +31,19 @@ fn receive(host: &str, sender: &str) {
 
 fn send(amount:u32, recipient: &str, ttl: u16, host: &str, username: &str, secret: &str, fluff: bool) {
     let api = grin::OwnerApi{host: host.to_owned(), username: username.to_owned(), secret: secret.to_owned()};
-    let slate = api.create_tx(amount);
+    let slate = api.clone().create_tx(amount);
     let cloned = slate.clone();
-    let slate_id = cloned["id"].as_str().unwrap();
+    let slate_id = cloned["id"].as_str();
     backends::Keybase::send(slate, recipient, ttl);
     match backends::Keybase::listen(ttl as u64, recipient) {
         Some(tx) => {
             println!("Received reply from {}", recipient);
             api.finalize(tx);
-            println!("Transaction {} broadcasted", slate_id);
-        }
+            println!("Transaction {} broadcasted", slate_id.unwrap());
+        },
         None => {
 
-            api.rollback(&slate_id);
+            api.rollback(slate_id.unwrap())
         }
     }
 }

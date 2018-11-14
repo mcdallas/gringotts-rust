@@ -1,8 +1,5 @@
 extern crate reqwest;
-
-use serde_derive;
 extern crate serde_json;
-
 extern crate serde;
 
 use self::serde::Serialize;
@@ -72,7 +69,7 @@ impl ForeignApi{
     }
 }
 
-
+#[derive(Clone)]
 pub struct OwnerApi{
     pub host: String,
     pub username: String,
