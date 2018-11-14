@@ -69,9 +69,16 @@ fn receive(host: &str, sender: &str) {
 
 fn send(amount:u64, recipient: &str, ttl: u16, host: &str, username: &str, secret: String, fluff: bool) {
     let api = grin::OwnerApi{host: host.to_owned(), username: username.to_owned(), secret: secret.to_owned()};
-    let slate = api.clone().create_tx(amount, fluff).unwrap();
+    let slate = match api.clone().create_tx(amount, fluff) {
+        Ok(val) => val,
+        Err(e) => {
+            println!("{}", e);
+            return
+        }
+    };
     let cloned = slate.clone();
     let slate_id = cloned["id"].as_str();
+    println!("Sending slate to {}", recipient);
     backends::Keybase::send(slate, recipient, ttl);
     match backends::Keybase::listen(ttl as u64, recipient) {
         Some(tx) => {
