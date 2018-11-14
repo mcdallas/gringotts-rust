@@ -13,7 +13,7 @@ use clap::App;
 
 fn read_secret() -> String {
     let mut path = home_dir().unwrap();
-//    path.push(".grin");
+    path.push(".grin");
     path.push(".api_secret");
     println!("{:?}", path);
     let data = fs::read_to_string(path).expect("Unable to read file");
@@ -24,7 +24,6 @@ fn main() {
     if !backends::Keybase::exists() { panic!("Keybase not found in PATH"); }
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
-//    let config = matches.value_of("config").unwrap_or("default.conf");
 
     if let Some(matches) = matches.subcommand_matches("receive") {
         let host = matches.value_of("host").unwrap();
@@ -44,18 +43,10 @@ fn main() {
         } else {
             read_secret()
         };
-        println!("GOT amount : {}", amount);
-        println!("GOT ttl : {}", ttl);
-        println!("GOT recipient : {}", recipient);
-        println!("GOT host : {}", host);
-        println!("GOT fluff : {}", fluff);
-        println!("GOT secret : {}", secret);
 
         send(amount, recipient, ttl, host, username, secret, fluff);
     }
 
-//    receive("192.168.0.5:13415", "mcdallas");
-//    let data = fs::read_to_string(home_dir().unwrap()).expect("Unable to read file");
 
 }
 
