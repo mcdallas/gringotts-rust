@@ -4,7 +4,7 @@ author: Mike Dallas <mcdallas@protonmail.com>
 about: The Grin Wizard Bank
 subcommands:
     - receive:
-        about: Recieves a transaction from sender
+        about: [SENDER]
         args:
             - sender:
                 index: 1
@@ -14,6 +14,7 @@ subcommands:
                 long: host
                 default_value: 127.0.0.1:13415
     - send:
+        about: [AMOUNT in grins] [RECIPIENT]
         args:
             - amount:
                 index: 1
@@ -24,6 +25,7 @@ subcommands:
             - ttl:
                 short: t
                 long: ttl
+                help: Seconds before the transaction is reversed
                 default_value: "60"
             - host:
                 short: h
@@ -32,12 +34,15 @@ subcommands:
             - username:
                 short: u
                 long: username
+                help: Grin owner api username
                 default_value: grin
             - secret:
                 short: s
                 long: secret
+                help: Grin owner api secret
                 takes_value: true
             - fluff:
                 short: f
+                help: Whether to fluff the transaction upon broadcasting
                 takes_value: false
 
