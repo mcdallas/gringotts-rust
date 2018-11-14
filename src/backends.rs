@@ -9,9 +9,9 @@ use std::thread::sleep;
 
 fn is_slate(blob: &Value) -> bool {
     if !blob.is_object() { return false }
-
     blob.get("num_participants").is_some() && blob.get("id").is_some() && blob.get("tx").is_some()
 }
+
 
 pub trait MessageBroker {
     fn exists() -> bool;

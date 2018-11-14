@@ -1,22 +1,7 @@
 name: gringotts
 version: "0.1.0"
 author: Mike Dallas <mcdallas@protonmail.com>
-about: Does awesome things
-#args:
-#    - config:
-#        short: c
-#        long: config
-#        value_name: FILE
-#        help: Sets a custom config file
-#        takes_value: true
-#    - INPUT:
-#        help: Sets the input file to use
-#        required: true
-#        index: 1
-#    - verbose:
-#        short: v
-#        multiple: true
-#        help: Sets the level of verbosity
+about: The Grin Wizard Bank
 subcommands:
     - receive:
         about: Recieves a transaction from sender

@@ -7,4 +7,5 @@ authors = ["Mike Dallas <mcdallas@protonmail.com>"]
 reqwest = "*"
 serde_json = "*"
 serde = "*"
+serde_derive = "*"
 clap = {version = "2.32", features = ["yaml"]}
